@@ -1,0 +1,49 @@
+{
+  "name": "smart-inventory-system",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed": "node scripts/seed.mjs",
+    "build:common": "npm run build -w @smart/common",
+    "build:services": "npm run build:common && npm run build -w @smart/api-gateway && npm run build -w @smart/auth-service && npm run build -w @smart/catalog-service && npm run build -w @smart/inventory-service && npm run build -w @smart/notification-service && npm run build -w @smart/reporting-service",
+    "build": "npm run build:services && npm run build -w @smart/web",
+    "dev": "npm run build:common && concurrently -n gateway,auth,catalog,inventory,alerts,reports,web -c cyan,green,blue,magenta,yellow,white,red \"npm run dev -w @smart/api-gateway\" \"npm run dev -w @smart/auth-service\" \"npm run dev -w @smart/catalog-service\" \"npm run dev -w @smart/inventory-service\" \"npm run dev -w @smart/notification-service\" \"npm run dev -w @smart/reporting-service\" \"npm run dev -w @smart/web\"",
+    "test": "node --test tests/*.test.mjs",
+    "check": "npm run build && npm test",
+    "test:integration": "cross-env RUN_INTEGRATION=1 node --test tests/api.integration.test.mjs"
+  },
+  "dependencies": {
+    "@nestjs/common": "^10.4.15",
+    "@nestjs/core": "^10.4.15",
+    "@nestjs/platform-express": "^10.4.15",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "pg": "^8.13.1",
+    "ioredis": "^5.4.2",
+    "bullmq": "^5.34.0",
+    "jsonwebtoken": "^9.0.2",
+    "bcryptjs": "^2.4.3",
+    "zod": "^3.24.1",
+    "prom-client": "^15.1.3",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "concurrently": "^9.1.2",
+    "@types/node": "^22.10.5",
+    "@types/pg": "^8.11.11",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.8",
+    "@types/bcryptjs": "^2.4.6",
+    "cross-env": "^7.0.3"
+  }
+}

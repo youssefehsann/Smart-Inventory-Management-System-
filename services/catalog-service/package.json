@@ -1,0 +1,11 @@
+{
+  "name": "@smart/catalog-service",
+  "version": "1.0.0",
+  "private": true,
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "cross-env PORT=4002 DOTENV_CONFIG_PATH=../../.env ts-node-dev --respawn --transpile-only -r dotenv/config src/main.ts",
+    "start": "cross-env PORT=4002 DOTENV_CONFIG_PATH=../../.env node -r dotenv/config dist/main.js"
+  }
+}

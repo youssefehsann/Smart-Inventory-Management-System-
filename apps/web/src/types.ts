@@ -1,0 +1,11 @@
+export type Role='admin'|'manager'|'staff';
+export type User={id:string;email:string;fullName:string;role:Role;active:boolean;createdAt:string};
+export type Product={id:string;sku:string;name:string;description:string;categoryId:string|null;categoryName:string|null;supplierId:string|null;supplierName:string|null;unitPrice:number;imageUrl:string;active:boolean;createdAt:string;updatedAt:string};
+export type Category={id:string;name:string;description:string};
+export type Supplier={id:string;name:string;email:string;phone:string;contactName:string};
+export type Warehouse={id:string;name:string;code:string;location:string;products:number;units:number};
+export type Stock={productId:string;warehouseId:string;warehouseName:string;quantity:number;reorderLevel:number;updatedAt:string};
+export type Movement={id:string;productId:string;productName?:string;warehouseId:string;warehouseName:string;delta:number;afterQuantity:number;reason:string;actorId:string;createdAt:string};
+export type Alert={id:string;productId:string;warehouseId:string;title:string;message:string;severity:'warning'|'critical';status:'open'|'resolved';isRead:boolean;createdAt:string;resolvedAt:string|null};
+export type Page<T>={data:T[];total:number;page:number;limit:number};
+export type Overview={stats:{totalProducts:number;totalUnits:number;totalWarehouses:number;lowStockCount:number;inventoryValue:number;openAlerts:number};warehouses:Warehouse[];lowStock:(Stock&{productName:string;sku:string})[];recentMovements:Movement[];trend:{day:string;inbound:number;outbound:number}[];productsByCategory:{name:string;value:number}[];recentAlerts:Alert[]};

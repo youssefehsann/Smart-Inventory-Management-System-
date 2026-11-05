@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS exports (
+  id UUID PRIMARY KEY, actor_id UUID NOT NULL, report_type TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

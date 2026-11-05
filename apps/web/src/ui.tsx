@@ -1,0 +1,16 @@
+import React from 'react';
+import {AlertCircle,CheckCircle2,LoaderCircle,Search,X} from 'lucide-react';
+export const money=(v:number)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(v||0);
+export const num=(v:number)=>new Intl.NumberFormat('en-US').format(v||0);
+export const date=(v:string)=>new Date(v).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+export function Button({children,variant='primary',className='',...rest}:React.ButtonHTMLAttributes<HTMLButtonElement>&{variant?:'primary'|'outline'|'ghost'|'danger'}){return <button className={`btn btn-${variant} ${className}`} {...rest}>{children}</button>}
+export function Card({children,className=''}:{children:React.ReactNode;className?:string}){return <div className={`surface ${className}`}>{children}</div>}
+export function PageHeader({eyebrow,title,subtitle,action}:{eyebrow?:string;title:string;subtitle:string;action?:React.ReactNode}){return <div className="page-heading"><div><div className="eyebrow">{eyebrow||'MANAGEMENT'}</div><h1>{title}</h1><p>{subtitle}</p></div>{action&&<div className="heading-actions">{action}</div>}</div>}
+export function Badge({children,tone='neutral'}:{children:React.ReactNode;tone?:'success'|'warning'|'danger'|'neutral'|'info'}){return <span className={`badge badge-${tone}`}><span className="badge-dot"/>{children}</span>}
+export function Empty({text='No records found.'}:{text?:string}){return <div className="empty"><Search size={25} opacity={.35}/><p>{text}</p></div>}
+export function Loading(){return <div className="loading"><LoaderCircle size={30} className="spin"/><span>Loading your workspace...</span></div>}
+export function ErrorBox({error}:{error:unknown}){return <div className="error-box"><AlertCircle size={20}/><div>{error instanceof Error?error.message:'An unexpected error occurred.'}</div></div>}
+export function Modal({title,subtitle,children,onClose}:{title:string;subtitle?:string;children:React.ReactNode;onClose:()=>void}){return <div className="modal-backdrop" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}><div className="modal" role="dialog" aria-modal="true" aria-label={title}><div className="modal-head"><div><h2>{title}</h2>{subtitle&&<p>{subtitle}</p>}</div><button className="icon-btn" onClick={onClose} aria-label="Close"><X size={20}/></button></div>{children}</div></div>}
+export function Field({label,children}:{label:string;children:React.ReactNode}){return <label className="field"><span>{label}</span>{children}</label>}
+export function Notice({text,onClose,type='success'}:{text:string;onClose:()=>void;type?:'error'|'success'}){return <div className={`toast toast-${type}`}>{type==='success'?<CheckCircle2 size={20}/>:<AlertCircle size={20}/>}<span>{text}</span><button onClick={onClose} aria-label="Dismiss"><X size={15}/></button></div>}
+export function useNotice(){const [notice,setNotice]=React.useState<{text:string;type:'success'|'error'}|null>(null);const say=(text:string,type:'success'|'error'='success')=>{setNotice({text,type});setTimeout(()=>setNotice(null),4400);};return {say,node:notice?<Notice {...notice} onClose={()=>setNotice(null)}/>:null}}
