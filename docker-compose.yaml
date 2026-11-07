@@ -1,0 +1,140 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      - POSTGRES_USER=smart
+      - POSTGRES_PASSWORD=smart_dev
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U smart -d postgres"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: sh -c "npm run db:migrate && npm run db:seed"
+    environment: &app-env
+      NODE_ENV: development
+      JWT_SECRET: demo_secret_change_before_production_123456789
+      POSTGRES_ADMIN_URL: postgresql://smart:smart_dev@postgres:5432/postgres
+      AUTH_DATABASE_URL: postgresql://smart:smart_dev@postgres:5432/smart_auth
+      CATALOG_DATABASE_URL: postgresql://smart:smart_dev@postgres:5432/smart_catalog
+      INVENTORY_DATABASE_URL: postgresql://smart:smart_dev@postgres:5432/smart_inventory
+      NOTIFICATION_DATABASE_URL: postgresql://smart:smart_dev@postgres:5432/smart_notifications
+      REPORTING_DATABASE_URL: postgresql://smart:smart_dev@postgres:5432/smart_reporting
+      REDIS_URL: redis://redis:6379
+      GATEWAY_URL: http://api:4000
+      AUTH_URL: http://auth:4001
+      CATALOG_URL: http://catalog:4002
+      INVENTORY_URL: http://inventory:4003
+      NOTIFICATION_URL: http://notification:4004
+      REPORTING_URL: http://reporting:4005
+      FRONTEND_ORIGIN: http://localhost:3050
+      ADMIN_EMAIL: admin@smartinventory.local
+      ADMIN_PASSWORD: ChangeThisBeforeUsing123!
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w @smart/api-gateway
+    environment:
+      <<: *app-env
+      PORT: 4000
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w @smart/auth-service
+    environment:
+      <<: *app-env
+      PORT: 4001
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  catalog:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w @smart/catalog-service
+    environment:
+      <<: *app-env
+      PORT: 4002
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  inventory:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w @smart/inventory-service
+    environment:
+      <<: *app-env
+      PORT: 4003
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  notification:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w @smart/notification-service
+    environment:
+      <<: *app-env
+      PORT: 4004
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  reporting:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: npm run dev -w @smart/reporting-service
+    environment:
+      <<: *app-env
+      PORT: 4005
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  client:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    command: npm run dev -w @smart/web -- --host 0.0.0.0
+    environment:
+      - WDS_SOCKET_PORT=0
+    depends_on:
+      - api
+
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3050:80"
+    depends_on:
+      - api
+      - client
+    restart: always
+
+volumes:
+  postgres_data:
