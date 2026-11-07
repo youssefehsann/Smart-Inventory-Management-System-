@@ -1,75 +1,63 @@
 
 pipeline {
-    agent {
-        label "docker"
-    }
+    agent any
 
     environment {
-        IMAGE_TAG = "v1"
+        DOCKER_USER = 'ehsooo'
+        IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
-
-        stage("Install Dependencies") {
+        stage('Build Test Image') {
             steps {
-                script {
-                    sh "docker run --rm -v $WORKSPACE:/app -w /app node:22-alpine npm ci"
-                }
+                sh 'docker build -t smart-inventory-test:${BUILD_NUMBER} -f Dockerfile.dev .'
             }
         }
 
-        stage("Run Tests") {
+        stage('Run Tests') {
             steps {
-                script {
-                    sh "docker run --rm -e CI=true -v $WORKSPACE:/app -w /app node:22-alpine npm run test"
-                }
+                sh 'docker run --rm -e CI=true smart-inventory-test:${BUILD_NUMBER} npm run test'
             }
         }
 
-        stage("Build Application") {
+        stage('Build Application Images') {
             steps {
-                script {
-                    sh "docker run --rm -v $WORKSPACE:/app -w /app node:22-alpine npm run build"
-                }
+                sh '''
+                    docker tag smart-inventory-test:${BUILD_NUMBER} ${DOCKER_USER}/smart-inventory-api:${BUILD_NUMBER}
+                    docker tag smart-inventory-test:${BUILD_NUMBER} ${DOCKER_USER}/smart-inventory-auth:${BUILD_NUMBER}
+                    docker tag smart-inventory-test:${BUILD_NUMBER} ${DOCKER_USER}/smart-inventory-catalog:${BUILD_NUMBER}
+                    docker tag smart-inventory-test:${BUILD_NUMBER} ${DOCKER_USER}/smart-inventory-inventory:${BUILD_NUMBER}
+                    docker tag smart-inventory-test:${BUILD_NUMBER} ${DOCKER_USER}/smart-inventory-notification:${BUILD_NUMBER}
+                    docker tag smart-inventory-test:${BUILD_NUMBER} ${DOCKER_USER}/smart-inventory-reporting:${BUILD_NUMBER}
+
+                    docker build -t ${DOCKER_USER}/smart-inventory-client:${BUILD_NUMBER} -f apps/web/Dockerfile.dev .
+
+                    docker build -t ${DOCKER_USER}/smart-inventory-nginx:${BUILD_NUMBER} ./nginx
+                '''
             }
         }
 
-        stage("Build Docker Images") {
+        stage('Push Images to Docker Hub') {
             steps {
-                script {
-                    sh "docker build -t ehsooo/smart-inventory-api:${IMAGE_TAG} -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-auth:${IMAGE_TAG} -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-catalog:${IMAGE_TAG} -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-inventory:${IMAGE_TAG} -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-notification:${IMAGE_TAG} -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-reporting:${IMAGE_TAG} -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-client:${IMAGE_TAG} -f apps/web/Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-nginx:${IMAGE_TAG} -f nginx/Dockerfile.dev nginx/"
-                }
-            }
-        }
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DH_USER',
+                    passwordVariable: 'DH_TOKEN'
+                )]) {
+                    sh '''
+                        echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
 
-        stage("Push Images to Docker Hub") {
-            steps {
-                script {
-                    withCredentials([usernamePassword(
-                        credentialsId: "dockerhub-creds",
-                        usernameVariable: "DOCKER_USER",
-                        passwordVariable: "DOCKER_PASS"
-                    )]) {
-                        sh '''
-                            echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_USER}/smart-inventory-api:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/smart-inventory-auth:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/smart-inventory-catalog:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/smart-inventory-inventory:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/smart-inventory-notification:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/smart-inventory-reporting:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/smart-inventory-client:${BUILD_NUMBER}
+                        docker push ${DOCKER_USER}/smart-inventory-nginx:${BUILD_NUMBER}
 
-                            docker push ehsooo/smart-inventory-api:v1
-                            docker push ehsooo/smart-inventory-auth:v1
-                            docker push ehsooo/smart-inventory-catalog:v1
-                            docker push ehsooo/smart-inventory-inventory:v1
-                            docker push ehsooo/smart-inventory-notification:v1
-                            docker push ehsooo/smart-inventory-reporting:v1
-                            docker push ehsooo/smart-inventory-client:v1
-                            docker push ehsooo/smart-inventory-nginx:v1
-                        '''
-                    }
+                        docker logout
+                    '''
                 }
             }
         }
@@ -77,10 +65,10 @@ pipeline {
 
     post {
         success {
-            echo "CI/CD Pipeline completed successfully!"
+            echo 'CI pipeline completed successfully!'
         }
         failure {
-            echo "Pipeline failed. Check the console output."
+            echo 'CI pipeline failed. Check the stage logs.'
         }
     }
 }
