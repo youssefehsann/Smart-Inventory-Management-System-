@@ -5,7 +5,7 @@ import {Area,AreaChart,CartesianGrid,ResponsiveContainer,Tooltip,XAxis,YAxis,Cel
 import {api} from '../api';
 import type {Overview} from '../types';
 import {Badge,Button,Card,date,Empty,ErrorBox,Loading,money,num,PageHeader} from '../ui';
-const colors=['#7863eb','#55b8bb','#f5b85d','#ff8d8d','#4c80e'];
+const colors=['#7863eb','#55b8bb','#f5b85d','#ff8d8d','#4c80ec'];
 export function Dashboard(){
   const navigate=useNavigate();const {data,error,isLoading}=useQuery({queryKey:['overview'],queryFn:()=>api.get<Overview>('/reports/overview'),refetchInterval:15000});
   if(isLoading)return <Loading/>;if(error)return <ErrorBox error={error}/>;if(!data)return <Empty/>;
