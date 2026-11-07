@@ -4,36 +4,16 @@ pipeline {
         label "docker"
     }
 
-    stages {
+    environment {
+        IMAGE_TAG = "v1"
+    }
 
-        stage("Checkout") {
-            steps {
-                script {
-                    git branch: 'master',
-                        url: 'https://github.com/youssefehsann/Smart-Inventory-Management-System-'
-                }
-            }
-        }
+    stages {
 
         stage("Install Dependencies") {
             steps {
                 script {
-                    sh "npm ci"
-                }
-            }
-        }
-
-        stage("Build Docker Images") {
-            steps {
-                script {
-                    sh "docker build -t ehsooo/smart-inventory-api:v1 -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-auth:v1 -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-catalog:v1 -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-inventory:v1 -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-notification:v1 -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-reporting:v1 -f Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-client:v1 -f apps/web/Dockerfile.dev ."
-                    sh "docker build -t ehsooo/smart-inventory-nginx:v1 -f nginx/Dockerfile.dev nginx/"
+                    sh "docker run --rm -v $WORKSPACE:/app -w /app node:22-alpine npm ci"
                 }
             }
         }
@@ -41,7 +21,30 @@ pipeline {
         stage("Run Tests") {
             steps {
                 script {
-                    sh "docker run -e CI=true npm run test"
+                    sh "docker run --rm -e CI=true -v $WORKSPACE:/app -w /app node:22-alpine npm run test"
+                }
+            }
+        }
+
+        stage("Build Application") {
+            steps {
+                script {
+                    sh "docker run --rm -v $WORKSPACE:/app -w /app node:22-alpine npm run build"
+                }
+            }
+        }
+
+        stage("Build Docker Images") {
+            steps {
+                script {
+                    sh "docker build -t ehsooo/smart-inventory-api:${IMAGE_TAG} -f Dockerfile.dev ."
+                    sh "docker build -t ehsooo/smart-inventory-auth:${IMAGE_TAG} -f Dockerfile.dev ."
+                    sh "docker build -t ehsooo/smart-inventory-catalog:${IMAGE_TAG} -f Dockerfile.dev ."
+                    sh "docker build -t ehsooo/smart-inventory-inventory:${IMAGE_TAG} -f Dockerfile.dev ."
+                    sh "docker build -t ehsooo/smart-inventory-notification:${IMAGE_TAG} -f Dockerfile.dev ."
+                    sh "docker build -t ehsooo/smart-inventory-reporting:${IMAGE_TAG} -f Dockerfile.dev ."
+                    sh "docker build -t ehsooo/smart-inventory-client:${IMAGE_TAG} -f apps/web/Dockerfile.dev ."
+                    sh "docker build -t ehsooo/smart-inventory-nginx:${IMAGE_TAG} -f nginx/Dockerfile.dev nginx/"
                 }
             }
         }
@@ -50,9 +53,9 @@ pipeline {
             steps {
                 script {
                     withCredentials([usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
+                        credentialsId: "dockerhub-creds",
+                        usernameVariable: "DOCKER_USER",
+                        passwordVariable: "DOCKER_PASS"
                     )]) {
                         sh '''
                             echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
@@ -67,8 +70,17 @@ pipeline {
                             docker push ehsooo/smart-inventory-nginx:v1
                         '''
                     }
-                } 
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "CI/CD Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed. Check the console output."
         }
     }
 }
