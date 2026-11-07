@@ -47,14 +47,14 @@ pipeline {
                     sh '''
                         echo "$DH_TOKEN" | docker login -u "$DH_USER" --password-stdin
 
-                        docker push ${DOCKER_USER}/smart-inventory-api:${BUILD_NUMBER}
-                        docker push ${DOCKER_USER}/smart-inventory-auth:${BUILD_NUMBER}
-                        docker push ${DOCKER_USER}/smart-inventory-catalog:${BUILD_NUMBER}
-                        docker push ${DOCKER_USER}/smart-inventory-inventory:${BUILD_NUMBER}
-                        docker push ${DOCKER_USER}/smart-inventory-notification:${BUILD_NUMBER}
-                        docker push ${DOCKER_USER}/smart-inventory-reporting:${BUILD_NUMBER}
-                        docker push ${DOCKER_USER}/smart-inventory-client:${BUILD_NUMBER}
-                        docker push ${DOCKER_USER}/smart-inventory-nginx:${BUILD_NUMBER}
+                        docker push --quiet ${DOCKER_USER}/smart-inventory-api:${BUILD_NUMBER}
+                        docker push --quiet ${DOCKER_USER}/smart-inventory-auth:${BUILD_NUMBER}
+                        docker push --quiet ${DOCKER_USER}/smart-inventory-catalog:${BUILD_NUMBER}
+                        docker push --quiet ${DOCKER_USER}/smart-inventory-inventory:${BUILD_NUMBER}
+                        docker push --quiet ${DOCKER_USER}/smart-inventory-notification:${BUILD_NUMBER}
+                        docker push --quiet ${DOCKER_USER}/smart-inventory-reporting:${BUILD_NUMBER}
+                        docker push --quiet ${DOCKER_USER}/smart-inventory-client:${BUILD_NUMBER}
+                        docker push --quiet ${DOCKER_USER}/smart-inventory-nginx:${BUILD_NUMBER}
 
                         docker logout
                     '''
