@@ -32,7 +32,7 @@ pipeline {
 
                     docker build -t ${DOCKER_USER}/smart-inventory-client:${BUILD_NUMBER} -f apps/web/Dockerfile.dev .
 
-                    docker build -t ${DOCKER_USER}/smart-inventory-nginx:${BUILD_NUMBER} ./nginx
+                    docker build -t ${DOCKER_USER}/smart-inventory-nginx:${BUILD_NUMBER} -f nginx/Dockerfile.dev ./nginx
                 '''
             }
         }
