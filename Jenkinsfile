@@ -67,7 +67,7 @@ pipeline {
                             docker push ehsooo/smart-inventory-nginx:v1
                         '''
                     }
-                }
+                } 
             }
         }
     }
